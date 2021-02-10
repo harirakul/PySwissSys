@@ -6,14 +6,28 @@ class Player:
         self.rating = rating
         self.score = 0
         self.color_balance = 0
-        self.record = {}
+        self.record = []
     
-    def already_played(self, player: str):
-        return player in self.record.keys()
+    def __str__(self) -> str:
+        return self.name
+    
+    def record_result(self, result: int, opponent) -> None:
+        if result not in (1, 0.5, 0): raise ValueError
+        self.record.append([result, opponent])
+        self.score += result
+        if result in (1, 0): 
+            opponent.record.append([result ^ 1, self])
+            opponent.score += result ^ 1
+        else: 
+            opponent.record.append([result, self]) #0.5
+            opponent.score += result
+    
+    def already_played(self, player: str) -> bool:
+        return player in sum(self.record, [])
     
     def info(self) -> dict:
         return {
-            "name": self.name,
+            "name": self,
             "rating": self.rating,
             "score": self.score
         }
@@ -43,8 +57,9 @@ class Tournament:
         self.sort_players()
         self.standings = [player.info() for player in self.players]
         self.table = pd.DataFrame(self.standings)
+        self.table.index += 1
     
-    def pair(self) -> None:
+    def pair(self) -> pd.DataFrame:
         num = len(self.players)
         if num < 2: raise ValueError("Needs atleast two players.")
         if num % 2 == 1: self.players.append(Bye())
@@ -58,29 +73,55 @@ class Tournament:
             if len(scoretables[i]) % 2 == 1:
                 scoretables[i] = scoretables[i].append(scoretables[i + 1].iloc[[0]])
                 scoretables[i + 1] = scoretables[i + 1].iloc[1:]
-                if scoretables[i + 1].empty: scoretables.pop(i + 1)
+                #if scoretables[i + 1].empty: scoretables.pop(i + 1)
 
-        #print(scoretables)
-        pairings = []
+        self.pairings = []
         for scoretable in scoretables:
             names = list(scoretable['name'])
             midpoint = int((len(names) + 1)/2)
             upper_section = names[:midpoint]
             lower_section = names[midpoint:]
             for i in range(len(upper_section)):
-                pairings.append((upper_section[i], lower_section[i]))
+                if self.round % 2 == 0: 
+                    pairing = [upper_section[i], lower_section[i]]
+                else:
+                    pairing = [lower_section[i], upper_section[i]]
+                self.pairings.append(pairing)
         
-        print(pairings)
+        pairing_table = (pd.DataFrame(self.pairings))
+        pairing_table.columns = ['White', 'Black']
+        pairing_table.index.rename('Board', inplace=True)
+        pairing_table.index += 1
+        return pairing_table
+    
+    def record_results(self, results: list) -> None:
+        #White Win: 1, Black Win: 0, Draw: 0.5
+        if len(results) != len(self.pairings): raise ValueError
+        for i in range(len(results)):
+            self.pairings[i][0].record_result(results[i], self.pairings[i][1])
+        self.round += 1
 
 if __name__ == "__main__":
     import random
     t = Tournament()
-    players = list('ABCDEFGHIJKLMNOPQRSTUVWXYZ')
+    players = list('ABCDEFGH')
 
     for i in range(len(players)):
         p = Player(players[i], random.randint(1000, 2900))
-        p.score = random.randint(0, 5)
         t.add_player(p)
+
+    print("=================TOURNAMENT================")
     print(t.table)
-    t.pair()
+
+    for i in range(1, 5):
+        print(f"=================ROUND {i}==================")
+        print(t.pair())
+        results = []
+        for pairing in t.pairings:
+            if pairing[0].rating > pairing[1].rating:
+                results.append(1)
+            else: results.append(0)
+        t.record_results(results)
+        t.update_standings()
+        print(t.table)
     

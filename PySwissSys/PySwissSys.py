@@ -1,5 +1,6 @@
 import tkinter as tk
 from tabulate import tabulate
+from pandastable import Table
 import td
 
 class GUI(tk.Tk):
@@ -52,8 +53,7 @@ class GUI(tk.Tk):
     def update_standings(self):
         self.tnmt.sort_players()
         self.table = tk.Text(self)
-        self.table.insert(tk.END, tabulate(self.tnmt.table, headers='keys'))
-        print(tabulate(self.tnmt.table, headers='keys'))
+        self.table.insert(tk.END, tabulate(self.tnmt.table, headers='keys', tablefmt='psql'))
         self.table.place(x = 8, y = 8)    
 
     def quit(self, event):

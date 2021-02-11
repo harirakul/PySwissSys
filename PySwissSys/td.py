@@ -1,4 +1,5 @@
 import pandas as pd
+import pickle
 
 class Player:
     def __init__(self, name: str, rating: float, uscf_id = None) -> None:
@@ -122,6 +123,10 @@ class Tournament:
         for i in range(len(results)):
             self.pairings[i][0].record_result(results[i], self.pairings[i][1])
         self.round += 1
+    
+    def save(self, filename: str) -> None:
+        with open(filename, 'wb') as f:
+            pickle.dump(self, f, pickle.HIGHEST_PROTOCOL)
 
 if __name__ == "__main__":
     import random

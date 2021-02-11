@@ -3,7 +3,7 @@ import pandas as pd
 class Player:
     def __init__(self, name: str, rating: float, uscf_id = None) -> None:
         self.name = name
-        self.rating = float(rating)
+        self.rating = rating
         self.score = 0
         self.uscf_id = uscf_id
         self.color_balance = 0
@@ -28,9 +28,10 @@ class Player:
     
     def info(self) -> dict:
         return {
-            "name": self,
-            "rating": self.rating,
-            "score": self.score
+            "Name": self.name,
+            "USCF ID": self.uscf_id,
+            "Rating": self.rating,
+            "Score": self.score
         }
 
 class Bye(Player):

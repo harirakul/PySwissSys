@@ -1,10 +1,11 @@
 import pandas as pd
 
 class Player:
-    def __init__(self, name: str, rating: float) -> None:
+    def __init__(self, name: str, rating: float, uscf_id = None) -> None:
         self.name = name
-        self.rating = rating
+        self.rating = float(rating)
         self.score = 0
+        self.uscf_id = uscf_id
         self.color_balance = 0
         self.record = []
     
@@ -41,6 +42,7 @@ class Tournament:
         self.players = []
         self.standings = []
         self.round = 1
+        self.table = pd.DataFrame()
     
     def add_player(self, new_player: Player) -> None:
         for player in self.players:

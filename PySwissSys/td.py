@@ -46,6 +46,12 @@ class Tournament:
         self.round = 1
         self.table = pd.DataFrame()
     
+    @classmethod
+    def load(cls, filename: str):
+        with open(filename, 'rb') as f:
+            cls = pickle.load(f)
+        return cls
+    
     def add_player(self, new_player: Player) -> None:
         for player in self.players:
             if new_player.name == player.name:

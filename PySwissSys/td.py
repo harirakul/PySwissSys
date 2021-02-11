@@ -82,10 +82,29 @@ class Tournament:
             upper_section = names[:midpoint]
             lower_section = names[midpoint:]
             for i in range(len(upper_section)):
-                if self.round % 2 == 0: 
-                    pairing = [upper_section[i], lower_section[i]]
+                #Optimize the selection for players' color
+                L = [lower_section[i], lower_section[i].color_balance]
+                R = [upper_section[i], upper_section[i].color_balance]
+
+                best_move = 0
+                best_score = 10
+
+                for move in (-1, 1):
+                    L[1] += move; R[1] -= move
+                    if abs(L[1]) + abs(R[1]) < best_score:
+                        best_score = abs(L[1]) + abs(R[1])
+                        best_move = move
+                    L[1] -= move; R[1] += move
+
+                if best_move == -1:
+                    pairing = [R[0], L[0]]
+                    R[0].color_balance += 1
+                    L[0].color_balance -= 1
                 else:
-                    pairing = [lower_section[i], upper_section[i]]
+                    pairing = [L[0], R[0]]
+                    L[0].color_balance += 1
+                    R[0].color_balance -= 1
+
                 self.pairings.append(pairing)
         
         pairing_table = (pd.DataFrame(self.pairings))

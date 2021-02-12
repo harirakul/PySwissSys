@@ -29,7 +29,7 @@ class Player:
     
     def info(self) -> dict:
         return {
-            "Name": self.name,
+            "Name": self,
             "USCF ID": self.uscf_id,
             "Rating": self.rating,
             "Score": self.score
@@ -40,7 +40,7 @@ class Bye(Player):
         super().__init__("Bye", 0)
 
 class Tournament:
-    def __init__(self) -> None:
+    def __init__(self, name = "Unnamed") -> None:
         self.players = []
         self.standings = []
         self.round = 1
@@ -61,7 +61,7 @@ class Tournament:
 
     def sort_players(self) -> None:
         for attr in ('rating', 'score'): #Sorting order
-            self.players.sort(key=lambda player: player.__dict__[attr], reverse=True)
+            self.players.sort(key=lambda player: float(player.__dict__[attr]), reverse=True)
        
     def update_standings(self):
         self.sort_players()
@@ -76,8 +76,8 @@ class Tournament:
         self.update_standings()
 
         scoretables = []
-        for score in sorted(self.table.score.value_counts().index.tolist(), reverse=True):
-            scoretables.append((self.table.loc[self.table['score'] == score]))
+        for score in sorted(self.table["Score"].value_counts().index.tolist(), reverse=True):
+            scoretables.append((self.table.loc[self.table['Score'] == score]))
         
         for i in range(len(scoretables) - 1):
             if len(scoretables[i]) % 2 == 1:
@@ -86,8 +86,9 @@ class Tournament:
                 #if scoretables[i + 1].empty: scoretables.pop(i + 1)
 
         self.pairings = []
+        print(scoretables)
         for scoretable in scoretables:
-            names = list(scoretable['name'])
+            names = list(scoretable['Name'])
             midpoint = int((len(names) + 1)/2)
             upper_section = names[:midpoint]
             lower_section = names[midpoint:]

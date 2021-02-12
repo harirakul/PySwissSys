@@ -1,17 +1,46 @@
 import tkinter as tk
+from tkinter.filedialog import askopenfilename
 from tabulate import tabulate
 from pandastable import Table
 import td
 
-class GUI(tk.Tk):
+class ConfigGUI(tk.Tk):
     def __init__(self) -> None:
+        super().__init__()
+        self.geometry("450x450")
+        self.title("Welcome to PySwissSys")
+        tk.Label(self, text="PySwissSys", font=("Bahnschrift", 24)).place(relx = 0.5, rely=0.25, anchor=tk.CENTER)
+        
+        new_tnmt = tk.Button(self, text="➕ New Tournament", font=("Bahnschrift", 14), command=self.new_tnmt)
+        new_tnmt.place(relx=0.5, rely=0.45, anchor=tk.CENTER)
+
+        open_tnmt = tk.Button(self, text="📁 Open an Existing Tournament", font=("Bahnschrift", 14), command=self.load_tnmt)
+        open_tnmt.place(relx=0.5, rely=0.55, anchor=tk.CENTER)
+    
+    def start(self):
+        self.destroy()
+        TournamentGUI(self.tnmt).mainloop()
+    
+    def load_tnmt(self):
+        file = askopenfilename(title = "Select Tournament file",filetypes = (("Tournament Files","*.tnmt"),("All Files","*.*")))
+        if file != "" and file.endswith("tnmt"):
+            self.tnmt = td.Tournament.load(file)
+            self.start()
+    
+    def new_tnmt(self): 
+        self.tnmt = td.Tournament()
+        self.start()
+
+class TournamentGUI(tk.Tk):
+    def __init__(self, tnmt: td.Tournament) -> None:
         super().__init__()
         self.geometry("800x450")
         self.title("PySwissSys")
-        self.tnmt = td.Tournament()
+        self.tnmt = tnmt
         self.setup_menu()
         self.update_standings()
         self.bind('<F2>', self.add_player)
+        self.bind('<F3>', self.pair)
 
     def setup_menu(self):
         self.menu = tk.Menu(self)
@@ -21,14 +50,17 @@ class GUI(tk.Tk):
         self.bind('<Control-q>', self.quit)
         reg_menu = tk.Menu(self.menu, tearoff=0)
         reg_menu.add_command(label = 'Register', command=self.add_player, accelerator="F2")
+        reg_menu.add_command(label = "Register from CSV file")
+        pairing_menu = tk.Menu(self.menu, tearoff=0)
+        pairing_menu.add_command(label="Pair next round...", command=self.pair, accelerator="F3")
         self.menu.add_cascade(label='File', menu=file_menu)
         self.menu.add_cascade(label='Players', menu = reg_menu)
+        self.menu.add_cascade(label="Pairings", menu=pairing_menu)
         self.config(menu=self.menu)
     
     def add_player(self, event=None):
-
         def register(event=None):
-            self.tnmt.add_player(td.Player(name.get(), uscf_rating.get(), uscf_id = uscf_id.get()))
+            self.tnmt.add_player(td.Player(name.get(), float(uscf_rating.get()), uscf_id = uscf_id.get()))
             self.update_standings()
             win.destroy()
 
@@ -54,11 +86,15 @@ class GUI(tk.Tk):
         self.tnmt.sort_players()
         self.table = tk.Text(self)
         self.table.insert(tk.END, tabulate(self.tnmt.table, headers='keys', tablefmt='psql'))
-        self.table.place(x = 8, y = 8)    
+        self.table.place(x = 8, y = 8)  
 
-    def quit(self, event):
+    def pair(self, event = None):
+        print(self.tnmt.pair())  
+
+    def quit(self, event=None):
         self.destroy()   
 
 if __name__ == '__main__':
-    GUI().mainloop()
+    ConfigGUI().mainloop()
+    #TournamentGUI().mainloop()
     

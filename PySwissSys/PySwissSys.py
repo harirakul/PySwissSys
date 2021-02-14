@@ -1,8 +1,27 @@
 import tkinter as tk
 from tkinter.filedialog import askopenfilename
-from tabulate import tabulate
 from pandastable import Table
 import td
+
+class Standings(tk.Frame):
+        def __init__(self, df, parent=None):
+            self.parent = parent
+            tk.Frame.__init__(self)
+            self.main = self.master
+            f = tk.Frame(self.main)
+            f.pack(fill=tk.BOTH,expand=1)
+            self.table = pt = Table(f, dataframe=df, showstatusbar=True)
+            pt.show()
+            return
+
+class Pairings(tk.Toplevel):
+    def __init__(self, master, pairings) -> None:
+        super().__init__(master=master)
+        self.wm_title("Pairings")
+        self.chart = tk.Frame(master=self)
+        self.chart.pack()
+        self.table = Table(self.chart, dataframe=pairings)
+        self.table.show()
 
 class ConfigGUI(tk.Tk):
     def __init__(self) -> None:
@@ -84,12 +103,12 @@ class TournamentGUI(tk.Tk):
 
     def update_standings(self):
         self.tnmt.sort_players()
-        self.table = tk.Text(self)
-        self.table.insert(tk.END, tabulate(self.tnmt.table, headers='keys', tablefmt='psql'))
-        self.table.place(x = 8, y = 8)  
+        f = Standings(self.tnmt.table, parent=self)
+        f.pack()
 
     def pair(self, event = None):
-        print(self.tnmt.pair())  
+        pairings = (self.tnmt.pair())  
+        Pairings(self, pairings).mainloop()
 
     def quit(self, event=None):
         self.destroy()   

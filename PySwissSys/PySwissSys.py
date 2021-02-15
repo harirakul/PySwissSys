@@ -1,6 +1,6 @@
 import tkinter as tk
-from tkinter.filedialog import askopenfilename
-from pandastable import Table
+import tkinter.filedialog
+from pandastable import Table, TableModel
 import td
 
 class Standings(tk.Frame):
@@ -10,17 +10,20 @@ class Standings(tk.Frame):
             self.main = self.master
             f = tk.Frame(self.main)
             f.pack(fill=tk.BOTH,expand=1)
-            self.table = pt = Table(f, dataframe=df, showstatusbar=True)
-            pt.show()
-            return
+            self.table = Table(f, dataframe=df, read_only=True, showstatusbar=True)
+            self.table.show()
+        
+        def update(self, standings) -> None:
+            self.table.updateModel(TableModel(standings))
+            self.table.redraw()
 
 class Pairings(tk.Toplevel):
-    def __init__(self, master, pairings) -> None:
+    def __init__(self, master) -> None:
         super().__init__(master=master)
-        self.wm_title("Pairings")
+        self.wm_title(f"Pairings for Round {master.tnmt.round}")
         self.chart = tk.Frame(master=self)
         self.chart.pack()
-        self.table = Table(self.chart, dataframe=pairings)
+        self.table = Table(self.chart, dataframe=master.tnmt.pair())
         self.table.show()
 
 class ConfigGUI(tk.Tk):
@@ -36,37 +39,41 @@ class ConfigGUI(tk.Tk):
         open_tnmt = tk.Button(self, text="📁 Open an Existing Tournament", font=("Bahnschrift", 14), command=self.load_tnmt)
         open_tnmt.place(relx=0.5, rely=0.55, anchor=tk.CENTER)
     
-    def start(self):
+    def start(self, filename = None):
         self.destroy()
-        TournamentGUI(self.tnmt).mainloop()
+        TournamentGUI(self.tnmt, filename).mainloop()
     
     def load_tnmt(self):
-        file = askopenfilename(title = "Select Tournament file",filetypes = (("Tournament Files","*.tnmt"),("All Files","*.*")))
+        file = tkinter.filedialog.askopenfilename(title = "Select Tournament file",filetypes = (("Tournament Files","*.tnmt"),("All Files","*.*")))
         if file != "" and file.endswith("tnmt"):
             self.tnmt = td.Tournament.load(file)
-            self.start()
+            self.start(filename=file)
     
     def new_tnmt(self): 
         self.tnmt = td.Tournament()
         self.start()
 
 class TournamentGUI(tk.Tk):
-    def __init__(self, tnmt: td.Tournament) -> None:
+    def __init__(self, tnmt: td.Tournament, filename = None) -> None:
         super().__init__()
         self.geometry("800x450")
-        self.title("PySwissSys")
         self.tnmt = tnmt
+        self.name = "Tournament: " + self.tnmt.title
+        self.title(self.name)
+        self.filename = filename
+        self.standings = Standings(self.tnmt.table, parent=self)
         self.setup_menu()
         self.update_standings()
         self.bind('<F2>', self.add_player)
         self.bind('<F3>', self.pair)
+        self.bind('<Control-q>', self.quit)
+        self.bind('<Control-s>', self.save)
 
     def setup_menu(self):
         self.menu = tk.Menu(self)
         file_menu = tk.Menu(self.menu, tearoff=0)
-        file_menu.add_command(label="New")
+        file_menu.add_command(label="Save", command=self.save, accelerator="Ctrl+S")
         file_menu.add_command(label = "Exit", command=self.quit, accelerator="Ctrl+Q")
-        self.bind('<Control-q>', self.quit)
         reg_menu = tk.Menu(self.menu, tearoff=0)
         reg_menu.add_command(label = 'Register', command=self.add_player, accelerator="F2")
         reg_menu.add_command(label = "Register from CSV file")
@@ -82,6 +89,7 @@ class TournamentGUI(tk.Tk):
             self.tnmt.add_player(td.Player(name.get(), float(uscf_rating.get()), uscf_id = uscf_id.get()))
             self.update_standings()
             win.destroy()
+            self.show_as_unsaved()
 
         win = tk.Toplevel()
         win.wm_title("Registration")
@@ -103,12 +111,27 @@ class TournamentGUI(tk.Tk):
 
     def update_standings(self):
         self.tnmt.sort_players()
-        f = Standings(self.tnmt.table, parent=self)
-        f.pack()
+        self.standings.update(self.tnmt.table)
+        self.show_as_unsaved()
+    
+    def save(self, event = None):
+        if self.filename is None:
+            self.filename = self.get_filename()
+        self.tnmt.save(self.filename)
+        self.title(self.name)
+    
+    def show_as_unsaved(self):
+        self.title(self.name + "*")
+
+    def get_filename(self) -> str:
+        return tkinter.filedialog.asksaveasfilename(
+            title = "Save as",
+            filetypes = (("Tournament Files","*.tnmt"),("All Files","*.*")),
+            initialfile = f"{self.tnmt.title}.tnmt"
+        )
 
     def pair(self, event = None):
-        pairings = (self.tnmt.pair())  
-        Pairings(self, pairings).mainloop()
+        Pairings(self).mainloop()
 
     def quit(self, event=None):
         self.destroy()   

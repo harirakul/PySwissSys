@@ -43,6 +43,7 @@ class Tournament:
     def __init__(self, name = "Unnamed") -> None:
         self.players = []
         self.standings = []
+        self.title = name
         self.round = 1
         self.table = pd.DataFrame()
     

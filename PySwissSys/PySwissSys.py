@@ -21,10 +21,26 @@ class Pairings(tk.Toplevel):
     def __init__(self, master) -> None:
         super().__init__(master=master)
         self.wm_title(f"Pairings for Round {master.tnmt.round}")
+        self.setup_menu()
         self.chart = tk.Frame(master=self)
         self.chart.pack()
-        self.table = Table(self.chart, dataframe=master.tnmt.pair())
+        self.table = Table(self.chart, dataframe=master.tnmt.pair(),
+                           showstatusbar=True, showtoolbar=True)
         self.table.show()
+    
+    def setup_menu(self):
+        self.menu = tk.Menu(self)
+        result_menu = tk.Menu(self.menu, tearoff=0)
+        result_menu.add_command(label="Finalize", command=self.update_results)
+        self.menu.add_cascade(label='Results', menu=result_menu)
+        self.config(menu=self.menu)
+    
+    def update_results(self, event=None):
+        results = ([int(i) for i in self.table.model.df["WResult"].tolist()])
+        self.master.tnmt.record_results(results)
+        self.master.update_standings()
+        print(self.master.tnmt.table)
+        self.destroy()
 
 class ConfigGUI(tk.Tk):
     def __init__(self) -> None:

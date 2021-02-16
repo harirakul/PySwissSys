@@ -123,6 +123,7 @@ class Tournament:
         pairing_table.columns = ['White', 'Black']
         pairing_table.index.rename('Board', inplace=True)
         pairing_table.index += 1
+        pairing_table["WResult"] = ""
         return pairing_table
     
     def record_results(self, results: list) -> None:
@@ -131,6 +132,7 @@ class Tournament:
         for i in range(len(results)):
             self.pairings[i][0].record_result(results[i], self.pairings[i][1])
         self.round += 1
+        self.update_standings()
     
     def save(self, filename: str) -> None:
         with open(filename, 'wb') as f:
@@ -157,6 +159,6 @@ if __name__ == "__main__":
                 results.append(1)
             else: results.append(0)
         t.record_results(results)
-        t.update_standings()
+        #t.update_standings()
         print(t.table)
     

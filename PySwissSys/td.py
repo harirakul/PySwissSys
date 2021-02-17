@@ -60,12 +60,18 @@ class Tournament:
                 raise ValueError("This player has already been entered into the tournament.")
         self.players.append(new_player)
         self.update_standings()
+    
+    def register_from_csv(self, csv: str) -> None:
+        df = pd.read_csv(csv)
+        for idx, row in df.iterrows():
+            p = Player(row['Name'], float(row["Rating"]), uscf_id=row['USCF ID'])
+            self.add_player(p)
 
     def sort_players(self) -> None:
         for attr in ('rating', 'score'): #Sorting order
             self.players.sort(key=lambda player: float(player.__dict__[attr]), reverse=True)
        
-    def update_standings(self):
+    def update_standings(self) -> None:
         self.sort_players()
         self.standings = [player.info() for player in self.players]
         self.table = pd.DataFrame(self.standings)
@@ -142,24 +148,26 @@ class Tournament:
 if __name__ == "__main__":
     import random
     t = Tournament()
-    players = list('ABCDEFGH')
-
-    for i in range(len(players)):
-        p = Player(players[i], random.randint(1000, 2900))
-        t.add_player(p)
-
-    print("=================TOURNAMENT================")
+    t.register_from_csv(r"databases\players.csv")
     print(t.table)
+    # players = list('ABCDEFGH')
 
-    for i in range(1, 5):
-        print(f"=================ROUND {i}==================")
-        print(t.pair())
-        results = []
-        for pairing in t.pairings:
-            if pairing[0].rating > pairing[1].rating:
-                results.append(1)
-            else: results.append(0)
-        t.record_results(results)
-        #t.update_standings()
-        print(t.table)
+    # for i in range(len(players)):
+    #     p = Player(players[i], random.randint(1000, 2900))
+    #     t.add_player(p)
+
+    # print("=================TOURNAMENT================")
+    # print(t.table)
+
+    # for i in range(1, 5):
+    #     print(f"=================ROUND {i}==================")
+    #     print(t.pair())
+    #     results = []
+    #     for pairing in t.pairings:
+    #         if pairing[0].rating > pairing[1].rating:
+    #             results.append(1)
+    #         else: results.append(0)
+    #     t.record_results(results)
+    #     #t.update_standings()
+    #     print(t.table)
     

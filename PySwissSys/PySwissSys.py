@@ -1,5 +1,6 @@
 import tkinter as tk
 import tkinter.filedialog
+import tkinter.simpledialog
 from pandastable import Table, TableModel
 import td
 
@@ -36,10 +37,9 @@ class Pairings(tk.Toplevel):
         self.config(menu=self.menu)
     
     def update_results(self, event=None):
-        results = ([int(i) for i in self.table.model.df["WResult"].tolist()])
+        results = ([float(i) for i in self.table.model.df["WResult"].tolist()])
         self.master.tnmt.record_results(results)
         self.master.update_standings()
-        print(self.master.tnmt.table)
         self.destroy()
 
 class ConfigGUI(tk.Tk):
@@ -66,7 +66,8 @@ class ConfigGUI(tk.Tk):
             self.start(filename=file)
     
     def new_tnmt(self): 
-        self.tnmt = td.Tournament()
+        name = (tkinter.simpledialog.askstring("New Tournament", "Enter a name for the tournament: "))
+        self.tnmt = td.Tournament(name = name)
         self.start()
 
 class TournamentGUI(tk.Tk):
@@ -95,9 +96,12 @@ class TournamentGUI(tk.Tk):
         reg_menu.add_command(label = "Register from CSV file")
         pairing_menu = tk.Menu(self.menu, tearoff=0)
         pairing_menu.add_command(label="Pair next round...", command=self.pair, accelerator="F3")
+        export_menu = tk.Menu(self.menu, tearoff=0)
+        export_menu.add_command(label="Export all...", command=self.export)
         self.menu.add_cascade(label='File', menu=file_menu)
         self.menu.add_cascade(label='Players', menu = reg_menu)
         self.menu.add_cascade(label="Pairings", menu=pairing_menu)
+        self.menu.add_cascade(label="Export", menu=export_menu)
         self.config(menu=self.menu)
     
     def add_player(self, event=None):
@@ -148,6 +152,10 @@ class TournamentGUI(tk.Tk):
 
     def pair(self, event = None):
         Pairings(self).mainloop()
+    
+    def export(self, event=None):
+        dir = tkinter.filedialog.askdirectory()
+        print(dir)
 
     def quit(self, event=None):
         self.destroy()   

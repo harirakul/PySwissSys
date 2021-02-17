@@ -18,6 +18,7 @@ class Player:
         self.record.append([result, opponent])
         self.score += result
         if result in (1, 0): 
+            result = int(result)
             opponent.record.append([result ^ 1, self])
             opponent.score += result ^ 1
         else: 

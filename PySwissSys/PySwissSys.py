@@ -93,7 +93,7 @@ class TournamentGUI(tk.Tk):
         file_menu.add_command(label = "Exit", command=self.quit, accelerator="Ctrl+Q")
         reg_menu = tk.Menu(self.menu, tearoff=0)
         reg_menu.add_command(label = 'Register', command=self.add_player, accelerator="F2")
-        reg_menu.add_command(label = "Register from CSV file")
+        reg_menu.add_command(label = "Register from CSV file", command=self.register_from_csv)
         pairing_menu = tk.Menu(self.menu, tearoff=0)
         pairing_menu.add_command(label="Pair next round...", command=self.pair, accelerator="F3")
         export_menu = tk.Menu(self.menu, tearoff=0)
@@ -109,7 +109,6 @@ class TournamentGUI(tk.Tk):
             self.tnmt.add_player(td.Player(name.get(), float(uscf_rating.get()), uscf_id = uscf_id.get()))
             self.update_standings()
             win.destroy()
-            self.show_as_unsaved()
 
         win = tk.Toplevel()
         win.wm_title("Registration")
@@ -128,6 +127,11 @@ class TournamentGUI(tk.Tk):
         win.bind('<Return>',register)
         submit.place(relx=0.5, rely=0.9, anchor=tk.CENTER)
         win.mainloop()
+    
+    def register_from_csv(self, event=None):
+        file = tkinter.filedialog.askopenfilename(title = "Select CSV",filetypes = (("Comma separated values","*.csv"),("All Files","*.*")))
+        self.tnmt.register_from_csv(file)
+        self.update_standings()
 
     def update_standings(self):
         self.tnmt.sort_players()

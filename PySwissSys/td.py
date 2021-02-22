@@ -9,21 +9,32 @@ class Player:
         self.uscf_id = uscf_id
         self.color_balance = 0
         self.record = []
+        self.rank = 0
     
     def __str__(self) -> str:
         return self.name
     
-    def record_result(self, result: int, opponent) -> None:
+    def record_result(self, result: float, opponent) -> None:
         if result not in (1, 0.5, 0): raise ValueError
-        self.record.append([result, opponent])
+        self.record.append([result, opponent, 1])
         self.score += result
         if result in (1, 0): 
             result = int(result)
-            opponent.record.append([result ^ 1, self])
+            opponent.record.append([result ^ 1, self, 0])
             opponent.score += result ^ 1
         else: 
-            opponent.record.append([result, self]) #0.5
+            opponent.record.append([result, self, 0]) #0.5
             opponent.score += result
+    
+    def generate_overall_record(self) -> list:
+        overall = []
+        RESULT = {0: "L", 0.5: "D", 1: "W"}
+        COLOR = {0: "B", 1: "W"}
+        for result in self.record:
+            res_str = RESULT[result[0]] + str(result[1].rank) + COLOR[result[2]]
+            overall.append(res_str)
+
+        return overall
     
     def already_played(self, player: str) -> bool:
         return player in sum(self.record, [])
@@ -70,12 +81,22 @@ class Tournament:
     def sort_players(self) -> None:
         for attr in ('rating', 'score'): #Sorting order
             self.players.sort(key=lambda player: float(player.__dict__[attr]), reverse=True)
+        
+        for i in range(len(self.players)): #Update rankings of the Players
+            self.players[i].rank = i + 1
        
     def update_standings(self) -> None:
         self.sort_players()
         self.standings = [player.info() for player in self.players]
         self.table = pd.DataFrame(self.standings)
         self.table.index += 1
+        records = []
+
+        if self.round > 1:
+            for player in self.players:
+                records.append(player.generate_overall_record())
+            for i in range(1, self.round):
+                self.table[f"Rnd {i}"] = [row[i - 1] for row in records]
     
     def pair(self) -> pd.DataFrame:
         num = len(self.players)
@@ -144,11 +165,15 @@ class Tournament:
     def save(self, filename: str) -> None:
         with open(filename, 'wb') as f:
             pickle.dump(self, f, pickle.HIGHEST_PROTOCOL)
+    
+    def tdexport(self) -> None:
+        pass
 
 if __name__ == "__main__":
     import random
-    t = Tournament()
-    t.register_from_csv(r"databases\players.csv")
+    t = Tournament.load(r"databases\tnmts\NewTest.tnmt")
+    t.update_standings()
+    #t.register_from_csv(r"databases\players.csv")
     print(t.table)
     # players = list('ABCDEFGH')
 
